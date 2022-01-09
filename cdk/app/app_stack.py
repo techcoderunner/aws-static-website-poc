@@ -1,18 +1,23 @@
-from aws_cdk import core
+from aws_cdk import (
+    core,
+    aws_iam as iam,
+    aws_s3 as s3,
+    aws_s3_deployment as s3deploy
+)
 
-from app.static_web_hosting_stack import StaticWebHostingStack
+from static_site_hosting import StaticSiteHosting
 
-class AppStack:
 
-    def __init__(self):
-        self.app = core.App()
+class StaticWebHostingStack(core.Stack):
 
-    def build(self) -> core.App:
+    def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
+        super().__init__(scope, id, **kwargs)
 
-        StaticWebHostingStack(
-            self.app,
-            "static-web-hosting-stack",
-            env={'region':'us-east-1'}
-        )
+        static_web_hosting = StaticSiteHosting(
+            self, "techcoderunner_static_web", bucket_name="techcoderunner-static-website")
 
-        return self.app
+        s3deploy.BucketDeployment(self, "DeployWebsite",
+                                  sources=[
+                                      s3deploy.Source.asset("webContent")],
+                                  destination_bucket=static_web_hosting.bucket
+                                  )
